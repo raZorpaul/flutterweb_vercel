@@ -104,7 +104,7 @@ class _MyHomePageState extends State<MyHomePage> {
           // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text('This is the start of the QR code scanner:'),
+            const Text('This is the start of the QR code scanner:, how about this'),
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
