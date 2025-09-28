@@ -142,6 +142,7 @@ class _QRViewExampleState extends State<QRViewExample> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
   Barcode? result;
+  String? upiDetails;
 
   @override
   void dispose() {
@@ -169,17 +170,14 @@ class _QRViewExampleState extends State<QRViewExample> {
               ),
             ),
           ),
-          /*
           Expanded(
             flex: 1,
             child: Center(
-              child: (result != null)
-                  ? Text(
-                      'Barcode Type: ${result!.format.name}   Data: ${result!.code}')
-                  : const Text('Scan a code'),
+              child: (upiDetails != null)
+                  ? SingleChildScrollView(child: Text(upiDetails!))
+                  : const Text('Scan a UPI QR code'),
             ),
           )
-          */
         ],
       ),
     );
@@ -190,11 +188,25 @@ class _QRViewExampleState extends State<QRViewExample> {
       this.controller = controller;
     });
     controller.scannedDataStream.listen((scanData) {
-      setState(() {
-        result = scanData;
-      });
-      // Optionally, navigate back or process the scanned data
-      // Navigator.pop(context);
+      if (scanData.code != null && scanData.code!.startsWith('upi://')) {
+        final uri = Uri.parse(scanData.code!);
+        final Map<String, String> params = uri.queryParameters;
+
+        String details = 'UPI Details:\n';
+        params.forEach((key, value) {
+          details += '${key.toUpperCase()}: $value\n';
+        });
+        setState(() {
+          result = scanData;
+          upiDetails = details;
+        });
+      } else {
+        setState(() {
+          result = scanData;
+          upiDetails = null; // Clear UPI details if not a UPI code
+        });
+      }
+      // Navigator.pop(context); // Removed this line to keep scanner active
     });
   }
 }
