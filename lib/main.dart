@@ -142,7 +142,7 @@ class _QRViewExampleState extends State<QRViewExample> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
   Barcode? result;
-  String? upiDetails;
+  String _displayMessage = 'Scan a UPI QR code'; // Initial message
 
   @override
   void dispose() {
@@ -173,9 +173,7 @@ class _QRViewExampleState extends State<QRViewExample> {
           Expanded(
             flex: 1,
             child: Center(
-              child: (upiDetails != null)
-                  ? SingleChildScrollView(child: Text(upiDetails!))
-                  : const Text('Scan a UPI QR code'),
+              child: SingleChildScrollView(child: Text(_displayMessage)),
             ),
           )
         ],
@@ -198,12 +196,16 @@ class _QRViewExampleState extends State<QRViewExample> {
         });
         setState(() {
           result = scanData;
-          upiDetails = details;
+          _displayMessage = details; // Set UPI details
+        });
+      } else if (scanData.code != null) {
+        setState(() {
+          result = scanData;
+          _displayMessage = 'Error: Not a UPI QR code. Scanned: ${scanData.code}'; // Indicate error
         });
       } else {
         setState(() {
-          result = scanData;
-          upiDetails = null; // Clear UPI details if not a UPI code
+          _displayMessage = 'Scan a UPI QR code';
         });
       }
       // Navigator.pop(context); // Removed this line to keep scanner active
