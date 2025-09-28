@@ -186,7 +186,7 @@ class _QRViewExampleState extends State<QRViewExample> {
       this.controller = controller;
     });
     controller.scannedDataStream.listen((scanData) {
-      if (scanData.code != null && scanData.code!.startsWith('upi://')) {
+      if (scanData.code != null && scanData.code!.startsWith('upi://pay')) {
         final uri = Uri.parse(scanData.code!);
         final Map<String, String> params = uri.queryParameters;
 
