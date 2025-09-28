@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 
 void main() {
   runApp(const MyApp());
@@ -56,6 +57,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
+  /*
   void _incrementCounter() {
     setState(() {
       // This call to setState tells the Flutter framework that something has
@@ -66,6 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _counter++;
     });
   }
+  */
 
   @override
   Widget build(BuildContext context) {
@@ -104,19 +107,94 @@ class _MyHomePageState extends State<MyHomePage> {
           // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text('This is the start of the QR code scanner:, how about this'),
+            /*
+            const Text('You have pushed the button this many times:'),
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
+            */
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const QRViewExample()),
+          );
+        },
+        tooltip: 'Scan QR Code',
+        child: const Icon(Icons.qr_code_scanner),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+}
+
+class QRViewExample extends StatefulWidget {
+  const QRViewExample({super.key});
+
+  @override
+  State<QRViewExample> createState() => _QRViewExampleState();
+}
+
+class _QRViewExampleState extends State<QRViewExample> {
+  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
+  QRViewController? controller;
+  Barcode? result;
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Scan QR Code')),
+      body: Column(
+        children: <Widget>[
+          Expanded(
+            flex: 5,
+            child: QRView(
+              key: qrKey,
+              onQRViewCreated: _onQRViewCreated,
+              overlay: QrScannerOverlayShape(
+                borderColor: Colors.red,
+                borderRadius: 10,
+                borderLength: 30,
+                borderWidth: 10,
+                cutOutSize: MediaQuery.of(context).size.width * 0.8,
+              ),
+            ),
+          ),
+          /*
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: (result != null)
+                  ? Text(
+                      'Barcode Type: ${result!.format.name}   Data: ${result!.code}')
+                  : const Text('Scan a code'),
+            ),
+          )
+          */
+        ],
+      ),
+    );
+  }
+
+  void _onQRViewCreated(QRViewController controller) {
+    setState(() {
+      this.controller = controller;
+    });
+    controller.scannedDataStream.listen((scanData) {
+      setState(() {
+        result = scanData;
+      });
+      // Optionally, navigate back or process the scanned data
+      // Navigator.pop(context);
+    });
   }
 }
