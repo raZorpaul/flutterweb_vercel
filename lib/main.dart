@@ -201,11 +201,11 @@ class _QRViewExampleState extends State<QRViewExample> {
       } else if (scanData.code != null) {
         setState(() {
           result = scanData;
-          _displayMessage = 'Error: Not a UPI QR code. Scanned: ${scanData.code}'; // Indicate error
+          _displayMessage = 'Not UPI: ${scanData.code}'; // Show raw code if not UPI
         });
       } else {
         setState(() {
-          _displayMessage = 'Scan a UPI QR code';
+          _displayMessage = 'Scan a UPI QR code'; // Default message
         });
       }
       // Navigator.pop(context); // Removed this line to keep scanner active
