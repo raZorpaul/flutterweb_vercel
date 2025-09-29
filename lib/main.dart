@@ -68,6 +68,7 @@ class _QRViewExampleState extends State<QRViewExample> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
   String displayText = 'Camera ready! Point at QR code';
+  String? upiId;
 
   @override
   void reassemble() {
@@ -109,11 +110,31 @@ class _QRViewExampleState extends State<QRViewExample> {
           Expanded(
             flex: 1,
             child: Center(
-              child: Text(
-                displayText,
-                style: const TextStyle(fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
+              child: upiId != null
+                  ? GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HelloWorldPage(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        displayText,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.blue,
+                          decoration: TextDecoration.underline,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  : Text(
+                      displayText,
+                      style: const TextStyle(fontSize: 18),
+                      textAlign: TextAlign.center,
+                    ),
             ),
           )
         ],
@@ -135,7 +156,8 @@ class _QRViewExampleState extends State<QRViewExample> {
             
             if (params['pa'] != null) {
               setState(() {
-                displayText = params['pa']!;
+                upiId = params['pa']!;
+                displayText = upiId!;
               });
             }
           } catch (e) {
@@ -144,5 +166,24 @@ class _QRViewExampleState extends State<QRViewExample> {
         }
       }
     });
+  }
+}
+
+class HelloWorldPage extends StatelessWidget {
+  const HelloWorldPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Hello World'),
+      ),
+      body: const Center(
+        child: Text(
+          'Hello World',
+          style: TextStyle(fontSize: 24),
+        ),
+      ),
+    );
   }
 }
