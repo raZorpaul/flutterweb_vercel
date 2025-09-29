@@ -159,6 +159,14 @@ class _QRViewExampleState extends State<QRViewExample> {
                 upiId = params['pa']!;
                 displayText = upiId!;
               });
+              
+              // Automatically navigate to Hello World page
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const HelloWorldPage(),
+                ),
+              );
             }
           } catch (e) {
             // If parsing fails, just keep scanning
