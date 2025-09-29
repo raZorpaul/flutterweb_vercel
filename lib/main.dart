@@ -125,36 +125,41 @@ class _QRViewExampleState extends State<QRViewExample> {
 
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
-
+    
     controller.scannedDataStream.listen((scanData) {
       if (scanData.code != null && scanData.code!.isNotEmpty && !hasNavigated) {
         String code = scanData.code!;
-
+        
         if (code.startsWith('upi://pay')) {
           try {
             final uri = Uri.parse(code);
             final params = uri.queryParameters;
-
-            if (params['pa'] != null) {
+            
+            if (params['pa'] != null && !hasNavigated) {
+              // Set flag immediately to prevent multiple navigations
+              hasNavigated = true;
+              
               setState(() {
                 upiId = params['pa']!;
                 displayText = upiId!;
-                hasNavigated = true;
               });
-
+              
               // Pause camera to prevent multiple scans
               controller.pauseCamera();
-
+              
               // Automatically navigate to Hello World page
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const HelloWorldPage(),
-                ),
-              );
+              Future.delayed(const Duration(milliseconds: 100), () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HelloWorldPage(),
+                  ),
+                );
+              });
             }
           } catch (e) {
             // If parsing fails, just keep scanning
+            print('Error parsing QR code: $e');
           }
         }
       }
