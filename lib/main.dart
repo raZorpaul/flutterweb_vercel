@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
-import 'package:flutterweb_vercel/pay_page.dart'; // Import the new PayPage
+import 'dart:io';
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +15,6 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true, // Use Material 3 for modern UI
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
@@ -41,25 +40,18 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('Welcome to the UPI Scanner!'),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const QRViewExample()),
-                );
-              },
-              icon: const Icon(Icons.qr_code_scanner),
-              label: const Text('Scan UPI QR Code'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                textStyle: const TextStyle(fontSize: 18),
-              ),
-            ),
-          ],
+          children: <Widget>[],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const QRViewExample()),
+          );
+        },
+        tooltip: 'Scan QR Code',
+        child: const Icon(Icons.qr_code_scanner),
       ),
     );
   }
@@ -75,17 +67,15 @@ class QRViewExample extends StatefulWidget {
 class _QRViewExampleState extends State<QRViewExample> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
-  String _displayMessage = 'Scan a UPI QR code'; // Standardized variable name
-  bool _isProcessing = false;
+  String displayText = 'Camera ready! Point at QR code';
 
   @override
   void reassemble() {
     super.reassemble();
-    // Platform.isAndroid check is removed for web-only focus
-    if (controller != null) {
-      controller!.pauseCamera();
-      controller!.resumeCamera();
+    if (Platform.isAndroid) {
+      controller?.pauseCamera();
     }
+    controller?.resumeCamera();
   }
 
   @override
@@ -99,26 +89,6 @@ class _QRViewExampleState extends State<QRViewExample> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Scan QR Code'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.flip_camera_ios),
-            onPressed: () async {
-              await controller?.flipCamera();
-              setState(() {
-                _displayMessage = 'Camera flipped';
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.flash_on),
-            onPressed: () async {
-              await controller?.toggleFlash();
-              setState(() {
-                _displayMessage = 'Flash toggled';
-              });
-            },
-          ),
-        ],
       ),
       body: Column(
         children: <Widget>[
@@ -139,15 +109,10 @@ class _QRViewExampleState extends State<QRViewExample> {
           Expanded(
             flex: 1,
             child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: SingleChildScrollView(
-                  child: Text(
-                    _displayMessage,
-                    style: const TextStyle(fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
+              child: Text(
+                displayText,
+                style: const TextStyle(fontSize: 18),
+                textAlign: TextAlign.center,
               ),
             ),
           )
@@ -158,72 +123,48 @@ class _QRViewExampleState extends State<QRViewExample> {
 
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
-
-    controller.scannedDataStream.listen(
-      (scanData) {
-        if (scanData.code == null || scanData.code!.isEmpty) {
-          return;
-        }
-
-        if (_isProcessing) return;
-
-        _isProcessing = true;
-
-        controller.pauseCamera();
-
+    print('🟢 [CONSOLE] QR Controller created and listening...');
+    
+    controller.scannedDataStream.listen((scanData) {
+      print('🔵 [CONSOLE] Stream received data');
+      
+      if (scanData.code != null && scanData.code!.isNotEmpty) {
         String code = scanData.code!;
-
+        print('🟡 [CONSOLE] QR Code scanned: $code');
+        
         if (code.startsWith('upi://pay')) {
+          print('🟢 [CONSOLE] Detected UPI code!');
           try {
             final uri = Uri.parse(code);
             final params = uri.queryParameters;
-
-            final upiDetails = UpiDetails(
-              payeeAddress: params['pa'] ?? 'N/A',
-              payeeName: Uri.decodeComponent(params['pn'] ?? 'N/A'),
-              amount: params['am'],
-              transactionNote: params['tn'],
-              merchantCode: params['mc'],
-              transactionRef: params['tr'],
-            );
-
-            // Navigate to the PayPage with UPI details
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => PayPage(upiDetails: upiDetails),
-              ),
-            );
-
+            print('🔵 [CONSOLE] Parsed parameters: $params');
+            
+            if (params['pa'] != null) {
+              print('✅ [CONSOLE] UPI ID found: ${params['pa']}');
+              setState(() {
+                displayText = params['pa']!;
+              });
+              print('🟢 [CONSOLE] Display updated to: ${params['pa']}');
+              
+              // Navigate to payment page
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PaymentPage(upiId: params['pa']!),
+                ),
+              );
+            } else {
+              print('⚠️ [CONSOLE] No UPI ID (pa) parameter found');
+            }
           } catch (e) {
-            setState(() {
-              _displayMessage = 'Error parsing UPI: $e';
-            });
+            print('❌ [CONSOLE] Error parsing UPI: $e');
           }
         } else {
-          setState(() {
-            _displayMessage = '''Error: Not a UPI Code\n\nScanned: ${code.substring(0, code.length > 50 ? 50 : code.length)}...''';
-          });
+          print('⚠️ [CONSOLE] Not a UPI QR code (doesn\'t start with upi://pay)');
         }
-
-        Future.delayed(const Duration(seconds: 3), () {
-          if (mounted && controller != null) {
-            controller!.resumeCamera();
-            setState(() {
-              _displayMessage = 'Ready to scan again!';
-            });
-          }
-          _isProcessing = false;
-        });
-      },
-      onError: (error) {
-        setState(() {
-          _displayMessage = 'Scanner error: $error';
-        });
-      },
-      onDone: () {
-        // Stream closed, possibly unmount QRView
-      },
-    );
+      } else {
+        print('⚠️ [CONSOLE] Received null or empty scan data');
+      }
+    });
   }
 }
