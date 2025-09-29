@@ -17,6 +17,6 @@ fi
 
 # Commit with the entered message
 git commit -m "$commit_message"
-
+branch_name=$(git symbolic-ref --short HEAD)
 git push --set-upstream origin "$branch_name"
 
