@@ -111,31 +111,11 @@ class _QRViewExampleState extends State<QRViewExample> {
           Expanded(
             flex: 1,
             child: Center(
-              child: upiId != null
-                  ? GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HelloWorldPage(),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        displayText,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.blue,
-                          decoration: TextDecoration.underline,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    )
-                  : Text(
-                      displayText,
-                      style: const TextStyle(fontSize: 18),
-                      textAlign: TextAlign.center,
-                    ),
+              child: Text(
+                displayText,
+                style: const TextStyle(fontSize: 18),
+                textAlign: TextAlign.center,
+              ),
             ),
           )
         ],
@@ -145,26 +125,26 @@ class _QRViewExampleState extends State<QRViewExample> {
 
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
-    
+
     controller.scannedDataStream.listen((scanData) {
       if (scanData.code != null && scanData.code!.isNotEmpty && !hasNavigated) {
         String code = scanData.code!;
-        
+
         if (code.startsWith('upi://pay')) {
           try {
             final uri = Uri.parse(code);
             final params = uri.queryParameters;
-            
+
             if (params['pa'] != null) {
               setState(() {
                 upiId = params['pa']!;
                 displayText = upiId!;
                 hasNavigated = true;
               });
-              
+
               // Pause camera to prevent multiple scans
               controller.pauseCamera();
-              
+
               // Automatically navigate to Hello World page
               Navigator.push(
                 context,
