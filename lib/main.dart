@@ -69,6 +69,7 @@ class _QRViewExampleState extends State<QRViewExample> {
   QRViewController? controller;
   String displayText = 'Camera ready! Point at QR code';
   String? upiId;
+  bool hasNavigated = false;
 
   @override
   void reassemble() {
@@ -146,7 +147,7 @@ class _QRViewExampleState extends State<QRViewExample> {
     this.controller = controller;
     
     controller.scannedDataStream.listen((scanData) {
-      if (scanData.code != null && scanData.code!.isNotEmpty) {
+      if (scanData.code != null && scanData.code!.isNotEmpty && !hasNavigated) {
         String code = scanData.code!;
         
         if (code.startsWith('upi://pay')) {
@@ -158,7 +159,11 @@ class _QRViewExampleState extends State<QRViewExample> {
               setState(() {
                 upiId = params['pa']!;
                 displayText = upiId!;
+                hasNavigated = true;
               });
+              
+              // Pause camera to prevent multiple scans
+              controller.pauseCamera();
               
               // Automatically navigate to Hello World page
               Navigator.push(
