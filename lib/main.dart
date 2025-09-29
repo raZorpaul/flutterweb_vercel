@@ -123,47 +123,25 @@ class _QRViewExampleState extends State<QRViewExample> {
 
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
-    print('🟢 [CONSOLE] QR Controller created and listening...');
     
     controller.scannedDataStream.listen((scanData) {
-      print('🔵 [CONSOLE] Stream received data');
-      
       if (scanData.code != null && scanData.code!.isNotEmpty) {
         String code = scanData.code!;
-        print('🟡 [CONSOLE] QR Code scanned: $code');
         
         if (code.startsWith('upi://pay')) {
-          print('🟢 [CONSOLE] Detected UPI code!');
           try {
             final uri = Uri.parse(code);
             final params = uri.queryParameters;
-            print('🔵 [CONSOLE] Parsed parameters: $params');
             
             if (params['pa'] != null) {
-              print('✅ [CONSOLE] UPI ID found: ${params['pa']}');
               setState(() {
                 displayText = params['pa']!;
               });
-              print('🟢 [CONSOLE] Display updated to: ${params['pa']}');
-              
-              // Navigate to payment page
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PaymentPage(upiId: params['pa']!),
-                ),
-              );
-            } else {
-              print('⚠️ [CONSOLE] No UPI ID (pa) parameter found');
             }
           } catch (e) {
-            print('❌ [CONSOLE] Error parsing UPI: $e');
+            // If parsing fails, just keep scanning
           }
-        } else {
-          print('⚠️ [CONSOLE] Not a UPI QR code (doesn\'t start with upi://pay)');
         }
-      } else {
-        print('⚠️ [CONSOLE] Received null or empty scan data');
       }
     });
   }
