@@ -15,7 +15,6 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
@@ -24,7 +23,6 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
   final String title;
 
   @override
@@ -32,16 +30,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  /*
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-  */
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,16 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            /*
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            */
-            const Text('Press the + button to scan a QR code!'),
-          ],
+          children: <Widget>[],
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -88,18 +67,14 @@ class QRViewExample extends StatefulWidget {
 class _QRViewExampleState extends State<QRViewExample> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
-  String _displayMessage = 'Initializing camera...';
-  bool _cameraReady = false;
-  bool _isProcessing = false; // Added for preventing multiple scans
+  String displayText = 'Camera ready! Point at QR code';
 
   @override
   void reassemble() {
     super.reassemble();
-    // This `Platform.isAndroid` check is typically not needed for web,
-    // but useful if you were targeting Android. Keeping it as a comment.
-    // if (Platform.isAndroid) {
-    //   controller?.pauseCamera();
-    // }
+    if (Platform.isAndroid) {
+      controller?.pauseCamera();
+    }
     controller?.resumeCamera();
   }
 
@@ -114,95 +89,30 @@ class _QRViewExampleState extends State<QRViewExample> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Scan QR Code'),
-        backgroundColor: Colors.blue,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.flip_camera_ios), // Corrected icon name
-            onPressed: () async {
-              await controller?.flipCamera();
-              setState(() {
-                _displayMessage = 'Camera flipped';
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.flash_on),
-            onPressed: () async {
-              await controller?.toggleFlash();
-              setState(() {
-                _displayMessage = 'Flash toggled';
-              });
-            },
-          ),
-        ],
       ),
       body: Column(
         children: <Widget>[
           Expanded(
             flex: 5,
-            child: Stack(
-              children: [
-                QRView(
-                  key: qrKey,
-                  onQRViewCreated: _onQRViewCreated,
-                  overlay: QrScannerOverlayShape(
-                    borderColor: Colors.green,
-                    borderRadius: 10,
-                    borderLength: 30,
-                    borderWidth: 10,
-                    cutOutSize: MediaQuery.of(context).size.width * 0.8,
-                  ),
-                ),
-                if (!_cameraReady)
-                  Container(
-                    color: Colors.black54,
-                    child: const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    ),
-                  ),
-              ],
+            child: QRView(
+              key: qrKey,
+              onQRViewCreated: _onQRViewCreated,
+              overlay: QrScannerOverlayShape(
+                borderColor: Colors.red,
+                borderRadius: 10,
+                borderLength: 30,
+                borderWidth: 10,
+                cutOutSize: MediaQuery.of(context).size.width * 0.8,
+              ),
             ),
           ),
           Expanded(
-            flex: 2,
-            child: Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    _displayMessage,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          await controller?.toggleFlash();
-                          setState(() {
-                            _displayMessage = 'Flash toggled';
-                          });
-                        },
-                        icon: const Icon(Icons.flash_on),
-                        label: const Text('Flash'),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          await controller?.flipCamera();
-                          setState(() {
-                            _displayMessage = 'Camera flipped';
-                          });
-                        },
-                        icon: const Icon(Icons.flip_camera_ios),
-                        label: const Text('Flip'),
-                      ),
-                    ],
-                  ),
-                ],
+            flex: 1,
+            child: Center(
+              child: Text(
+                displayText,
+                style: const TextStyle(fontSize: 18),
+                textAlign: TextAlign.center,
               ),
             ),
           )
@@ -212,74 +122,41 @@ class _QRViewExampleState extends State<QRViewExample> {
   }
 
   void _onQRViewCreated(QRViewController controller) {
-    setState(() {
-      this.controller = controller;
-      _displayMessage = 'Camera ready! Point at QR code';
-      _cameraReady = true;
-    });
-
-    controller.scannedDataStream.listen(
-      (scanData) {
-        if (scanData.code == null || scanData.code!.isEmpty) {
-          setState(() {
-            _displayMessage = 'Received empty scan data';
-          });
-          return;
-        }
-
-        if (_isProcessing) return; // Prevent processing multiple scans at once
-
-        _isProcessing = true;
-
-        // Pause camera briefly
-        controller.pauseCamera();
-
+    this.controller = controller;
+    print('🟢 [CONSOLE] QR Controller created and listening...');
+    
+    controller.scannedDataStream.listen((scanData) {
+      print('🔵 [CONSOLE] Stream received data');
+      
+      if (scanData.code != null && scanData.code!.isNotEmpty) {
         String code = scanData.code!;
-
+        print('🟡 [CONSOLE] QR Code scanned: $code');
+        
         if (code.startsWith('upi://pay')) {
+          print('🟢 [CONSOLE] Detected UPI code!');
           try {
             final uri = Uri.parse(code);
             final params = uri.queryParameters;
-
-            String details = '✅ UPI QR CODE DETECTED!\n\n';
-            if (params['pa'] != null) details += 'UPI ID: ${params['pa']}\n';
-            if (params['pn'] != null) details += 'Name: ${params['pn']}\n';
-            if (params['am'] != null) details += 'Amount: ₹${params['am']}\n';
-            if (params['tn'] != null) details += 'Note: ${params['tn']}\n';
+            print('🔵 [CONSOLE] Parsed parameters: $params');
             
-            setState(() {
-              _displayMessage = details;
-            });
+            if (params['pa'] != null) {
+              print('✅ [CONSOLE] UPI ID found: ${params['pa']}');
+              setState(() {
+                displayText = params['pa']!;
+              });
+              print('🟢 [CONSOLE] Display updated to: ${params['pa']}');
+            } else {
+              print('⚠️ [CONSOLE] No UPI ID (pa) parameter found');
+            }
           } catch (e) {
-            setState(() {
-              _displayMessage = 'Error parsing UPI: $e';
-            });
+            print('❌ [CONSOLE] Error parsing UPI: $e');
           }
         } else {
-          setState(() {
-            _displayMessage = '❌ Not a UPI Code\n\nScanned: ${code.substring(0, code.length > 50 ? 50 : code.length)}...';
-          });
+          print('⚠️ [CONSOLE] Not a UPI QR code (doesn\'t start with upi://pay)');
         }
-
-        // Resume after 3 seconds
-        Future.delayed(const Duration(seconds: 3), () {
-          if (mounted && controller != null) {
-            controller!.resumeCamera();
-            setState(() {
-              _displayMessage = 'Ready to scan again!';
-            });
-          }
-          _isProcessing = false;
-        });
-      },
-      onError: (error) {
-        setState(() {
-          _displayMessage = 'Scanner error: $error';
-        });
-      },
-      onDone: () {
-        // Stream closed, possibly unmount QRView
-      },
-    );
+      } else {
+        print('⚠️ [CONSOLE] Received null or empty scan data');
+      }
+    });
   }
 }
