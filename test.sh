@@ -18,4 +18,4 @@ fi
 # Commit with the entered message
 git commit -m "$commit_message"
 
-git push --set-upstream origin "$current_branch"
+git push
