@@ -145,15 +145,17 @@ class _QRViewExampleState extends State<QRViewExample> {
                 displayText = upiId!;
               });
 
-              // Automatically navigate to Hello World page - using mounted check
+              // Automatically navigate to Hello World page - schedule on next frame
               if (mounted) {
                 print('Navigating to HelloWorldPage with UPI ID: $upiId');
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => HelloWorldPage(upiId: upiId!),
-                  ),
-                );
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!mounted) return;
+                  Navigator.of(context, rootNavigator: true).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => HelloWorldPage(upiId: upiId!),
+                    ),
+                  );
+                });
               }
             }
           } catch (e) {
