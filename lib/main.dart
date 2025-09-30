@@ -73,6 +73,7 @@ class _QRViewExampleState extends State<QRViewExample> {
   String? upiId;
   bool hasNavigated = false;
   StreamSubscription? scanSubscription;
+  UpiDetails? parsedUpiDetails;
 
   @override
   void reassemble() {
@@ -114,10 +115,32 @@ class _QRViewExampleState extends State<QRViewExample> {
           Expanded(
             flex: 1,
             child: Center(
-              child: Text(
-                displayText,
-                style: const TextStyle(fontSize: 18),
-                textAlign: TextAlign.center,
+              child: InkWell(
+                onTap: parsedUpiDetails == null
+                    ? null
+                    : () {
+                        final currentController = controller;
+                        controller = null;
+                        scanSubscription?.cancel();
+                        scanSubscription = null;
+                        currentController?.dispose();
+
+                        if (!mounted) return;
+                        Navigator.of(context, rootNavigator: true).push(
+                          MaterialPageRoute(
+                            builder: (context) => PayPage(upiDetails: parsedUpiDetails!),
+                          ),
+                        );
+                      },
+                child: Text(
+                  displayText,
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: parsedUpiDetails != null ? Colors.blue : Colors.black,
+                    decoration: parsedUpiDetails != null ? TextDecoration.underline : TextDecoration.none,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
           )
@@ -144,27 +167,17 @@ class _QRViewExampleState extends State<QRViewExample> {
 
               setState(() {
                 upiId = params['pa']!;
-                displayText = upiId!;
+                parsedUpiDetails = UpiDetails(
+                  payeeAddress: params['pa']!,
+                  payeeName: params['pn'] ?? 'Unknown',
+                  amount: params['am'],
+                  transactionNote: params['tn'],
+                  merchantCode: params['mc'],
+                  transactionRef: params['tr'],
+                );
+                displayText = 'Proceed with ${upiId!}';
               });
-
-              // Dispose the camera before navigating to avoid web route change being ignored
-              final currentController = this.controller;
-              this.controller = null;
-              scanSubscription?.cancel();
-              scanSubscription = null;
-              currentController?.dispose();
-
-              if (mounted) {
-                print('Navigating to HelloWorldPage with UPI ID: $upiId');
-                Future.microtask(() {
-                  if (!mounted) return;
-                  Navigator.of(context, rootNavigator: true).push(
-                    MaterialPageRoute(
-                      builder: (context) => HelloWorldPage(upiId: upiId!),
-                    ),
-                  );
-                });
-              }
+              // Do not navigate automatically; user will tap the link
             }
           } catch (e) {
             // If parsing fails, just keep scanning
@@ -175,26 +188,17 @@ class _QRViewExampleState extends State<QRViewExample> {
           hasNavigated = true;
           setState(() {
             upiId = code;
-            displayText = code;
+            parsedUpiDetails = UpiDetails(
+              payeeAddress: code,
+              payeeName: 'Unknown',
+              amount: null,
+              transactionNote: null,
+              merchantCode: null,
+              transactionRef: null,
+            );
+            displayText = 'Proceed with $code';
           });
-
-          final currentController = this.controller;
-          this.controller = null;
-          scanSubscription?.cancel();
-          scanSubscription = null;
-          currentController?.dispose();
-
-          if (mounted) {
-            print('Navigating (plain UPI) to HelloWorldPage with UPI ID: $upiId');
-            Future.microtask(() {
-              if (!mounted) return;
-              Navigator.of(context, rootNavigator: true).push(
-                MaterialPageRoute(
-                  builder: (context) => HelloWorldPage(upiId: upiId!),
-                ),
-              );
-            });
-          }
+          // Do not navigate automatically; user will tap the link
         }
       }
     });
