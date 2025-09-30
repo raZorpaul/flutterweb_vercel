@@ -145,12 +145,10 @@ class _QRViewExampleState extends State<QRViewExample> {
                 displayText = upiId!;
               });
 
-              // Pause camera to prevent multiple scans
-              controller.pauseCamera();
-
               // Automatically navigate to Hello World page - using mounted check
               if (mounted) {
-                Navigator.push(
+                print('Navigating to HelloWorldPage with UPI ID: $upiId');
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
                     builder: (context) => HelloWorldPage(upiId: upiId!),
