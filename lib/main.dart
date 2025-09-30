@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 import 'dart:io';
 import 'package:flutterweb_vercel/pay_page.dart';
@@ -71,6 +72,7 @@ class _QRViewExampleState extends State<QRViewExample> {
   String displayText = 'Camera ready! Point at QR code';
   String? upiId;
   bool hasNavigated = false;
+  StreamSubscription? scanSubscription;
 
   @override
   void reassemble() {
@@ -127,7 +129,7 @@ class _QRViewExampleState extends State<QRViewExample> {
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
 
-    controller.scannedDataStream.listen((scanData) {
+    scanSubscription = controller.scannedDataStream.listen((scanData) {
       if (scanData.code != null && scanData.code!.isNotEmpty && !hasNavigated) {
         String code = scanData.code!;
 
@@ -145,12 +147,18 @@ class _QRViewExampleState extends State<QRViewExample> {
                 displayText = upiId!;
               });
 
-              // Automatically navigate to Hello World page - schedule on next frame
+              // Dispose the camera before navigating to avoid web route change being ignored
+              final currentController = this.controller;
+              this.controller = null;
+              scanSubscription?.cancel();
+              scanSubscription = null;
+              currentController?.dispose();
+
               if (mounted) {
                 print('Navigating to HelloWorldPage with UPI ID: $upiId');
-                WidgetsBinding.instance.addPostFrameCallback((_) {
+                Future.microtask(() {
                   if (!mounted) return;
-                  Navigator.of(context, rootNavigator: true).pushReplacement(
+                  Navigator.of(context, rootNavigator: true).push(
                     MaterialPageRoute(
                       builder: (context) => HelloWorldPage(upiId: upiId!),
                     ),
@@ -161,6 +169,31 @@ class _QRViewExampleState extends State<QRViewExample> {
           } catch (e) {
             // If parsing fails, just keep scanning
             print('Error parsing QR code: $e');
+          }
+        } else if (code.contains('@') && !hasNavigated) {
+          // Fallback: handle plain UPI IDs encoded as text
+          hasNavigated = true;
+          setState(() {
+            upiId = code;
+            displayText = code;
+          });
+
+          final currentController = this.controller;
+          this.controller = null;
+          scanSubscription?.cancel();
+          scanSubscription = null;
+          currentController?.dispose();
+
+          if (mounted) {
+            print('Navigating (plain UPI) to HelloWorldPage with UPI ID: $upiId');
+            Future.microtask(() {
+              if (!mounted) return;
+              Navigator.of(context, rootNavigator: true).push(
+                MaterialPageRoute(
+                  builder: (context) => HelloWorldPage(upiId: upiId!),
+                ),
+              );
+            });
           }
         }
       }
