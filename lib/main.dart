@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 import 'dart:io';
+import 'package:flutterweb_vercel/pay_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -152,7 +153,7 @@ class _QRViewExampleState extends State<QRViewExample> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const HelloWorldPage(),
+                    builder: (context) => HelloWorldPage(upiId: upiId!),
                   ),
                 );
               }
@@ -168,7 +169,8 @@ class _QRViewExampleState extends State<QRViewExample> {
 }
 
 class HelloWorldPage extends StatelessWidget {
-  const HelloWorldPage({super.key});
+  final String upiId;
+  const HelloWorldPage({super.key, required this.upiId});
 
   @override
   Widget build(BuildContext context) {
@@ -176,10 +178,10 @@ class HelloWorldPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Hello World'),
       ),
-      body: const Center(
+      body: Center(
         child: Text(
-          'Hello World',
-          style: TextStyle(fontSize: 24),
+          'Hello World, UPI ID: $upiId',
+          style: const TextStyle(fontSize: 24),
         ),
       ),
     );
